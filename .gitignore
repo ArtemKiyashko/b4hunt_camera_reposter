@@ -6,10 +6,4 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 data/
-ucornflows
-captures/
-apk_analysis/
-research/**/.venv/
-research/**/__pycache__/
-research/p4p_poc/ucon_extracted_event*.mp4
-research/p4p_poc/ucon_extracted_event*.jpg
+media/

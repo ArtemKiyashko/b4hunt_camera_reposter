@@ -1,8 +1,15 @@
 name: camera-reposter
 
 x-service-defaults: &service-defaults
-  image: ${IMAGE_REPOSITORY:-ghcr.io/artemkiyashko/b4hunt-camera-reposter}:${IMAGE_TAG:-latest}
-  env_file: .env
+  image: ghcr.io/artemkiyashko/b4hunt-camera-reposter:latest
+  environment:
+    REDIS_URL: redis://redis:6379/0
+    DATABASE_PATH: /data/state.db
+    MEDIA_ROOT: /media
+    CAMERA_POLL_INTERVAL_SECONDS: ${CAMERA_POLL_INTERVAL_SECONDS:-60}
+    AI_REQUIRED: ${AI_REQUIRED:-false}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
   depends_on:
     redis:
       condition: service_healthy
