@@ -1,0 +1,54 @@
+import asyncio
+import hashlib
+import logging
+from pathlib import Path
+
+import httpx
+from redis.asyncio import Redis
+
+from camera_reposter.bus import EventBus
+from camera_reposter.config import Settings
+from camera_reposter.events import STREAM_DISCOVERED, STREAM_DOWNLOADED
+from camera_reposter.store import Store
+
+
+async def main() -> None:
+    settings = Settings.from_environment()
+    await Store(settings.database_path).initialize()
+    redis = Redis.from_url(settings.redis_url, decode_responses=False)
+    bus = EventBus(redis)
+    logging.info("Media downloader started")
+    async for message_id, event in bus.consume(STREAM_DISCOVERED, "downloaders", "downloader-1"):
+        logging.info("Received %s from camera %s", event.external_media_id, event.camera_id)
+        if not event.media_id or not event.source_url:
+            logging.warning("Skipping media without id or source URL: %s", event.external_media_id)
+            await bus.acknowledge(STREAM_DISCOVERED, "downloaders", message_id)
+            continue
+        target = (
+            Path(settings.media_root)
+            / event.camera_id
+            / f"{event.media_id}.{event.media_type}"
+        )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_suffix(target.suffix + ".part")
+        digest = hashlib.sha256()
+        async with httpx.AsyncClient(timeout=120) as client:
+            async with client.stream("GET", event.source_url) as response:
+                response.raise_for_status()
+                with temporary.open("wb") as output:
+                    async for chunk in response.aiter_bytes(1024 * 1024):
+                        digest.update(chunk)
+                        output.write(chunk)
+        temporary.replace(target)
+        downloaded = await Store(settings.database_path).set_media_downloaded(
+            event.media_id, str(target), digest.hexdigest()
+        )
+        if downloaded:
+            await bus.publish(STREAM_DOWNLOADED, downloaded)
+        await bus.acknowledge(STREAM_DISCOVERED, "downloaders", message_id)
+    await redis.aclose()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(main())

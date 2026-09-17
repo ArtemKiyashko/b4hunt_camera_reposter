@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+.pytest_cache
+.ruff_cache
+__pycache__
+*.py[cod]
+*.egg-info
+.env
+.env.*
+!/.env.example
+apk_analysis
+research
+captures
+data
+media
+ucornflows
