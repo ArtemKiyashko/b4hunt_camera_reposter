@@ -18,7 +18,8 @@ async def main() -> None:
     bus = EventBus(redis)
     logging.info("Telegram publisher started")
     if not settings.telegram_bot_token:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
+        logging.warning("TELEGRAM_BOT_TOKEN is not configured; publisher is disabled")
+        await asyncio.Event().wait()
     async for message_id, event in bus.consume(STREAM_DOWNLOADED, "publishers", "publisher-1"):
         logging.info("Received ready media %s", event.media_id)
         if event.media_id and event.local_path:

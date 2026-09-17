@@ -1,7 +1,7 @@
 name: camera-reposter
 
 x-service-defaults: &service-defaults
-  build: .
+  image: ${IMAGE_REPOSITORY:-ghcr.io/artemkiyashko/b4hunt-camera-reposter}:${IMAGE_TAG:-latest}
   env_file: .env
   depends_on:
     redis:

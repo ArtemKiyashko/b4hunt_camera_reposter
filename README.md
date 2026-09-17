@@ -13,7 +13,7 @@ The P4P implementation belongs in a separate SDK boundary. It is useful for
 this UBox/Ucon SDK family, but it is not a generic camera driver: relay
 behavior, event codes, file framing, and firmware capabilities vary by model.
 This application depends only on the small camera adapter contract; the
-reusable `p4p-camera-sdk` will be published and versioned independently.
+reusable `p4p-camera-sdk` is published and versioned independently.
 
 The database is SQLite in the `app-data` Docker volume. Downloaded media resides in `media`.
 
@@ -21,15 +21,22 @@ The database is SQLite in the `app-data` Docker volume. Downloaded media resides
 
 ```sh
 cp .env.example .env
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 
 # Follow service logs
 docker compose logs -f camera-poller media-downloader telegram-publisher
+
+# For local source/image development, build explicitly:
+docker compose build
 ```
 
 The camera adapter is isolated in `src/camera_reposter/adapters/camera.py`.
 The reverse-engineering work has been removed from this runtime repository and
-is being extracted into the separately versioned SDK.
+is maintained in the separately versioned `p4p-camera-sdk` repository.
+
+The pinned SDK version is declared in `pyproject.toml`; Docker installs it
+from the package index as part of the normal application build.
 
 ## Event flow
 
@@ -41,8 +48,8 @@ When AI is enabled, the analyzer will consume `media.downloaded` and must produc
 
 Protocol research, captures, decompiled APK output, replay scripts, and
 extracted media are intentionally outside this application repository. The
-next production milestone is to publish the verified P4P implementation as a
-separately versioned SDK, then inject it through `CameraAdapter` without
+The verified P4P implementation is published as a separately versioned SDK,
+then injected through `CameraAdapter` without
 coupling the Telegram pipeline to protocol internals.
 
 ## Production checklist
