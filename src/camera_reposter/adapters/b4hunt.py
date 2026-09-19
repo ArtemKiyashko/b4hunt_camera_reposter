@@ -17,6 +17,7 @@ class B4HuntCameraAdapter:
     def __init__(self, account: str, password: str, device_index: int = 0) -> None:
         self._credentials = CredentialClient(account, password)
         self._device_index = device_index
+        self._download_lock = asyncio.Lock()
 
     async def _device(self):
         return await self._credentials.get_device(self._device_index)
@@ -50,16 +51,17 @@ class B4HuntCameraAdapter:
             return SdCardClient(session).list_events(begin, end)
 
     async def download_media(self, media: RemoteMedia, destination: Path) -> int:
-        device = await self._device()
-        event_values = json.loads(media.source_ref)
-        event = SdCardEvent(event_type=0, **event_values)
-        return await asyncio.to_thread(
-            self._download,
-            device.device_uid,
-            device.device_password,
-            event,
-            destination,
-        )
+        async with self._download_lock:
+            device = await self._device()
+            event_values = json.loads(media.source_ref)
+            event = SdCardEvent(event_type=0, **event_values)
+            return await asyncio.to_thread(
+                self._download,
+                device.device_uid,
+                device.device_password,
+                event,
+                destination,
+            )
 
     @staticmethod
     def _download(uid: str, password: str, event, destination: Path) -> int:
