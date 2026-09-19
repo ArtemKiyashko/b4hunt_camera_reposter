@@ -10,6 +10,9 @@ x-service-defaults: &service-defaults
     AI_REQUIRED: ${AI_REQUIRED:-false}
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
     TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    UBIA_ACCOUNT: ${UBIA_ACCOUNT:-}
+    UBIA_ACCOUNT_PASSWORD: ${UBIA_ACCOUNT_PASSWORD:-}
+    UBIA_DEVICE_INDEX: ${UBIA_DEVICE_INDEX:-0}
   depends_on:
     redis:
       condition: service_healthy

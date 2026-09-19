@@ -14,7 +14,7 @@ class MediaEvent:
     external_media_id: str
     media_type: str
     captured_at: str
-    source_url: str | None = None
+    source_ref: str | None = None
     media_id: str | None = None
     local_path: str | None = None
     sha256: str | None = None
@@ -35,7 +35,9 @@ class MediaEvent:
 
     @classmethod
     def from_fields(cls, fields: dict[str, str]) -> "MediaEvent":
-        optional = {"source_url", "media_id", "local_path", "sha256", "caption"}
+        if "source_ref" not in fields and "source_url" in fields:
+            fields = {**fields, "source_ref": fields["source_url"]}
+        optional = {"source_ref", "media_id", "local_path", "sha256", "caption"}
         values = {
             key: None if key in optional and value == "" else value
             for key, value in fields.items()

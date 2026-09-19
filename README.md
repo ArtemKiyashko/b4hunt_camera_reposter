@@ -21,6 +21,8 @@ The database is SQLite in the `app-data` Docker volume. Downloaded media resides
 
 ```sh
 cp .env.example .env
+# Configure UBIA_ACCOUNT, UBIA_ACCOUNT_PASSWORD and UBIA_DEVICE_INDEX first.
+# UBIA_DEVICE_INDEX is the camera position in the Ucon app and starts at 0.
 docker compose pull
 docker compose up -d
 
@@ -56,7 +58,7 @@ coupling the Telegram pipeline to protocol internals.
 
 - Keep camera credentials in a secret store or protected `.env`; never commit them.
 - Pin and review dependencies before publishing images.
-- Add a real camera adapter configuration and migrations before enabling polling.
+- Set `UBIA_DEVICE_INDEX` to the zero-based camera position shown by the Ucon app.
 - Add Telegram rate limiting, retry/backoff, and webhook/alerting for failed deliveries.
 - Publish the P4P SDK separately only after protocol tests cover relay discovery,
   event decoding, multi-file downloads, and incomplete-transfer recovery.

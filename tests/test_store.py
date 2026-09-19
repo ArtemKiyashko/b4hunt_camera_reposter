@@ -27,7 +27,7 @@ async def test_registration_snapshots_camera_chat_lists(tmp_path) -> None:
         camera_id="camera-a",
         external_media_id="item-1",
         media_type="video",
-        source_url="https://camera.example/item-1",
+        source_ref="https://camera.example/item-1",
     )
     media_id = await store.register_discovered_media(event)
 

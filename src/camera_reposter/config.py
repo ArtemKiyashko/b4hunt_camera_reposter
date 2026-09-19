@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass
 from os import getenv
 
@@ -11,8 +10,10 @@ class Settings:
     telegram_bot_token: str | None
     poll_interval_seconds: int
     ai_required: bool
-    cameras_json: str
     log_level: str
+    ucon_account: str | None
+    ucon_account_password: str | None
+    ucon_device_index: int
 
     @classmethod
     def from_environment(cls) -> "Settings":
@@ -23,12 +24,8 @@ class Settings:
             telegram_bot_token=getenv("TELEGRAM_BOT_TOKEN") or None,
             poll_interval_seconds=int(getenv("CAMERA_POLL_INTERVAL_SECONDS", "60")),
             ai_required=getenv("AI_REQUIRED", "false").lower() == "true",
-            cameras_json=getenv("CAMERAS_JSON", "[]"),
             log_level=getenv("LOG_LEVEL", "INFO").upper(),
+            ucon_account=getenv("UBIA_ACCOUNT") or None,
+            ucon_account_password=getenv("UBIA_ACCOUNT_PASSWORD") or None,
+            ucon_device_index=int(getenv("UBIA_DEVICE_INDEX", "0")),
         )
-
-    def cameras(self) -> list[dict[str, str]]:
-        value = json.loads(self.cameras_json)
-        if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
-            raise ValueError("CAMERAS_JSON must be a JSON array of objects")
-        return value

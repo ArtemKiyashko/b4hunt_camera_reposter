@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS media (
     external_media_id TEXT NOT NULL,
     media_type TEXT NOT NULL,
     captured_at TEXT NOT NULL,
-    source_url TEXT,
+    source_ref TEXT,
     local_path TEXT,
     sha256 TEXT,
     analysis_status TEXT NOT NULL DEFAULT 'disabled',
@@ -81,6 +81,14 @@ class Store:
         Path(self._database_path).parent.mkdir(parents=True, exist_ok=True)
         async with aiosqlite.connect(self._database_path) as connection:
             await connection.executescript(SCHEMA)
+            columns = {
+                row[1]
+                async for row in await connection.execute("PRAGMA table_info(media)")
+            }
+            if "source_url" in columns and "source_ref" not in columns:
+                await connection.execute("ALTER TABLE media ADD COLUMN source_ref TEXT")
+                await connection.execute("UPDATE media SET source_ref = source_url")
+            await connection.commit()
 
     async def register_discovered_media(self, event: MediaEvent) -> str | None:
         media_id = str(uuid4())
@@ -89,7 +97,7 @@ class Store:
             cursor = await connection.execute(
                 """
                 INSERT OR IGNORE INTO media
-                    (id, camera_id, external_media_id, media_type, captured_at, source_url)
+                    (id, camera_id, external_media_id, media_type, captured_at, source_ref)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -98,7 +106,7 @@ class Store:
                     event.external_media_id,
                     event.media_type,
                     event.captured_at,
-                    event.source_url,
+                    event.source_ref,
                 ),
             )
             if cursor.rowcount == 0:
@@ -136,7 +144,7 @@ class Store:
                 return None
             cursor = await connection.execute(
                 """SELECT camera_id, external_media_id, media_type, captured_at,
-                          source_url, local_path, sha256, caption, analysis_status
+                          source_ref, local_path, sha256, caption, analysis_status
                    FROM media WHERE id = ?""",
                 (media_id,),
             )
@@ -146,7 +154,7 @@ class Store:
             return None
         return MediaEvent(
             camera_id=row[0], external_media_id=row[1], media_type=row[2],
-            captured_at=row[3], source_url=row[4], media_id=media_id,
+            captured_at=row[3], source_ref=row[4], media_id=media_id,
             local_path=row[5], sha256=row[6], caption=row[7], analysis_status=row[8],
         )
 
